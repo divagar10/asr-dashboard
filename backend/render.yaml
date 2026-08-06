@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: asr-dashboard-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    plan: free
+
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+      - key: ALLOWED_ORIGINS
+        sync: false          # set this manually in Render dashboard to your Netlify URL
+      - key: PORT
+        generateValue: false
+        value: "10000"
+
+    disk:
+      name: asr-db
+      mountPath: /opt/render/project/src/backend
+      sizeGB: 1
