@@ -1,0 +1,260 @@
+
+##################################################################
+  ASR DIGITAL CLIENT DASHBOARD
+  Live System Output -- cisprotraining.com
+##################################################################
+
+==================================================================
+  1. SERVER STATUS
+==================================================================
+  [OK]  Status                         online
+  [OK]  Version                        1.0.0
+  [OK]  Project                        ASR Digital Client Dashboard
+  [OK]  Website                        cisprotraining.com
+  [OK]  Timestamp                      2026-08-02T10:07:12.097929
+
+==================================================================
+  2. WEBSITE OVERVIEW  [LIVE]
+==================================================================
+  [OK]  Crawl Status                   completed
+  [OK]  Last Crawled                   2026-07-30T16:21:29
+  [OK]  Site Name                      CISPRO Training
+  [OK]  Page Title                     Cispro Training | Best Software Training Institute in Coim
+  [OK]  Description                    Leading software training institute in Coimbatore. AI, ...
+  [OK]  SSL/HTTPS                      ACTIVE
+  [OK]  Robots.txt                     Found
+  [OK]  Sitemap                        Found
+  [OK]  Logo URL                       https://cisprotraining.com/cispro-logo.png
+  [OK]  Phone Numbers                  +91 98948 37196, +91 86109 10354
+  [OK]  Address                        Visit our institute 23, First Floor, Sriram Layout Rd, Ven
+  [OK]  Social Links                   whatsapp
+  [OK]  Total Pages                    12
+  [OK]  Total Images                   2
+  [OK]  Internal Links                 12
+  [OK]  Technologies                   None detected
+
+  Navigation Menu (crawled live):
+    > Home                   /
+    > Contact                /contact
+
+==================================================================
+  3. COURSES  [LIVE]
+==================================================================
+  [OK]  Total Courses                  11
+
+  #    Category         Course Name                            URL
+  ------------------------------------------------------------------
+  1    Office           Advanced Excel Course in Coimbatore    /courses/advanced-excel
+  2    Other            Artificial Intelligence Course in Co   /courses/artificial-intelligence
+  3    Networking       Cyber Security Course in Coimbatore    /courses/cyber-security
+  4    Other            Data Analytics Course in Coimbatore    /courses/data-analytics
+  5    Other            Data Engineering Course in Coimbator   /courses/data-engineering
+  6    Other            Digital Marketing Course in Coimbato   /courses/digital-marketing
+  7    Programming      Full Stack Development Course in Coi   /courses/full-stack
+  8    Other            GST Course in Coimbatore | GST Certi   /courses/gst
+  9    Office           MS Office Course in Coimbatore | MS    /courses/ms-office
+  10   Other            Tally Prime Course in Coimbatore | T   /courses/tally-prime
+  11   Office           Internal Lovable project               https://id-preview--58304bfe-fb4f-4c93-927a-5212d57284ed.lovable.app/courses/advanced-excel
+
+==================================================================
+  4. DASHBOARD KPIs  [DEMO]
+==================================================================
+  [OK]  Monthly Visitors               6,004
+  [OK]  Total Visitors                 49,436
+  [OK]  Unique Users                   4,442
+  [OK]  Page Views                     22,815
+  [OK]  Avg Session                    3m 42s
+  [OK]  Bounce Rate                    44.2%
+  [OK]  Leads Generated                228
+  [OK]  Conversion Rate                3.8%
+  [OK]  Returning Visitors             1,951
+  [OK]  Monthly Change                 +7.4% vs last month
+
+==================================================================
+  5. TRAFFIC ANALYTICS  [DEMO]
+==================================================================
+  [OK]  Avg Session                    3m 42s
+  [OK]  Pages/Session                  3.8
+  [OK]  Bounce Rate                    44.2%
+  [OK]  Returning Visitors             32.5%
+
+  Traffic Sources:
+    Organic Search           |||||||||||||||||||||    42%
+    Direct                   |||||||||||              22%
+    Social Media             |||||||                  15%
+    Referral                 |||||                    10%
+    Email                    |||                      6%
+    Paid Ads                 ||                       5%
+
+  Top Countries:
+    United Arab Emirates         |||||||||||||||||||  38%  (1,820 visitors)
+    Saudi Arabia                 ||||||||||           20%  (960 visitors)
+    India                        |||||||              15%  (720 visitors)
+    Pakistan                     |||||                10%  (480 visitors)
+    United Kingdom               |||                  6%  (288 visitors)
+    United States                ||                   5%  (240 visitors)
+    Canada                       |                    3%  (144 visitors)
+
+  Devices:
+    Mobile       |||||||||||||||||||    58%
+    Desktop      |||||||||||            35%
+    Tablet       ||                     7%
+
+==================================================================
+  6. LEADS  [DEMO]
+==================================================================
+  [OK]  Total Leads                    80
+
+  Status Breakdown:
+    Contacted       20  ||||||||||||||||||||
+    Interested      22  ||||||||||||||||||||||
+    New             17  |||||||||||||||||
+    Closed           9  |||||||||
+    Enrolled        12  ||||||||||||
+
+  Lead Funnel:
+    Website Visitors           4800  ||||||||||||||||||||||||
+    Page Engaged               1920  |||||||||
+    Form Submitted              384  |
+    Contacted                   230  |
+    Enrolled                     82  
+
+  Name                   Course                     Source           Status       Date
+  ------------------------------------------------------------------------------
+  Priya Al-Farsi         Cisco CCNA                 Social Media     Contacted    2026-08-02
+  Sara Patel             Cisco CCNA                 Referral         Interested   2026-07-31
+  Mohammed Johnson       Cisco CCNA                 Website Form     Contacted    2026-07-30
+  Hana Al-Farsi          DevOps / Docker            Walk-in          New          2026-07-29
+  Sara Singh             Azure Administrator        Social Media     New          2026-07-26
+  James Williams         Embedded Systems / Ardui   Social Media     Closed       2026-07-25
+  Sara Johnson           AWS Cloud                  Phone Call       Closed       2026-07-24
+  Hana Sharma            DevOps / Docker            Referral         Enrolled     2026-07-24
+  Priya Al-Hamad         Data Science               Phone Call       Interested   2026-07-23
+  Hana Al-Hamad          AWS Cloud                  Walk-in          Contacted    2026-07-23
+  Layla Johnson          Full Stack Development     WhatsApp         Interested   2026-07-23
+  Fatima Al-Zaabi        JavaScript / React         Walk-in          Contacted    2026-07-21
+
+==================================================================
+  7. SEO ANALYSIS  [LIVE]
+==================================================================
+  [OK]  Pages Analyzed                 10
+  [OK]  Average Score                  78.0/100
+  [OK]  Total Issues                   0
+
+  Page                                          Score  Bar (10pts each)
+  ----------------------------------------------------------------
+  /                                             78.0  |||||||
+  /courses/data-analytics                       78.0  |||||||
+  /courses/artificial-intelligence              78.0  |||||||
+  /                                             78.0  |||||||
+  /courses/ms-office                            78.0  |||||||
+  /courses/data-engineering                     78.0  |||||||
+  /courses/full-stack                           78.0  |||||||
+  /courses/tally-prime                          78.0  |||||||
+  /courses/cyber-security                       78.0  |||||||
+  /courses/digital-marketing                    78.0  |||||||
+
+==================================================================
+  8. WEBSITE HEALTH  [LIVE + DEMO]
+==================================================================
+  [OK]  Overall Score                  81/100
+
+  Check                          Result                   Source
+  ------------------------------------------------------------
+  SSL Certificate                PASS                     [LIVE]
+  HTTPS Redirect                 PASS                     [LIVE]
+  Robots.txt                     PASS                     [LIVE]
+  XML Sitemap                    PASS                     [LIVE]
+  Page Speed (Mobile)            Score: 58/100            [DEMO]
+  Page Speed (Desktop)           Score: 74/100            [DEMO]
+  Mobile Friendly                Score: 82/100            [DEMO]
+  Broken Links                   Count: 3                 [DEMO]
+  404 Pages                      Count: 2                 [DEMO]
+  Image Optimization             Score: 61/100            [DEMO]
+
+==================================================================
+  9. AI INSIGHTS  [DEMO -- 8 business recommendations]
+==================================================================
+
+  [HIGH]   Traffic up 18% — Python content driving growth
+         Category: Traffic  |  Impact: High
+         Rec: Publish 2 more Python-related articles this
+              month to capitalize on momentum.
+         Action --> Create Content
+
+  [HIGH]   Full Stack course generating highest leads
+         Category: Leads  |  Impact: Very High
+         Rec: Run Google Ads targeting 'Full Stack course
+              Dubai/UAE'. Budget: AED 500/month.
+         Action --> Launch Campaign
+
+  [MED]    Mobile bounce rate is 18% higher than desktop
+         Category: Website Health  |  Impact: Medium
+         Rec: Optimize mobile page speed and simplify the
+              mobile navigation menu.
+         Action --> Fix Mobile UX
+
+  [HIGH]   Latest blog post has high engagement potential
+         Category: Content  |  Impact: High
+         Rec: Create a weekly content series: 'Tech Career in
+              UAE 2025'. Target 1 post/week.
+         Action --> Plan Content Calendar
+
+  [MED]    7 pages missing meta descriptions
+         Category: SEO  |  Impact: Medium
+         Rec: Add optimized meta descriptions to all course
+              pages within 1 week.
+         Action --> Fix SEO Issues
+
+  [LOW]    Add Google Reviews / testimonials section
+         Category: Conversion  |  Impact: Medium
+         Rec: Embed Google Reviews widget and add 5–10 student
+              testimonials with photos.
+         Action --> Add Social Proof
+
+  [MED]    Page load speed below industry average
+         Category: Performance  |  Impact: High
+         Rec: Compress images to WebP format and enable
+              browser caching. Expected improvement: 40%.
+         Action --> Optimize Performance
+
+  [LOW]    Email marketing opportunity identified
+         Category: Marketing  |  Impact: Medium
+         Rec: Set up a monthly newsletter with course updates,
+              tips, and special offers.
+         Action --> Start Email Campaign
+
+==================================================================
+  10. MONTHLY REPORT  [LIVE + DEMO]
+==================================================================
+  [OK]  Report Month                   August 2026
+  [OK]  Monthly Visitors               5,914
+  [OK]  Unique Users                   4,376
+  [OK]  Page Views                     22,473
+  [OK]  Leads                          224
+  [OK]  Conversion Rate                3.8%
+  [OK]  Bounce Rate                    44.2%
+
+  AI Highlights:
+    * Traffic up 18% — Python content driving growth
+    * Full Stack course generating highest leads
+    * Latest blog post has high engagement potential
+
+  Top Traffic Sources:
+    Organic Search             42%
+    Direct                     22%
+    Social Media               15%
+    Referral                   10%
+    Email                      6%
+    Paid Ads                   5%
+
+##################################################################
+  RESULT: ALL 10 ENDPOINTS OPERATIONAL
+
+  Backend API  --> http://localhost:8000        [RUNNING]
+  API Docs     --> http://localhost:8000/docs   [RUNNING]
+  Frontend     --> http://localhost:5173        [npm run dev]
+
+  Login: admin@asr.digital  /  demo1234
+##################################################################
+

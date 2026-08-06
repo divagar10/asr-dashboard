@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 130" fill="none">
+
+  <!-- ═══ Letter A ═══
+       Square block letter: full frame with inner void + crossbar
+  -->
+  <rect x="0"   y="0"  width="22" height="100" fill="white"/>
+  <rect x="108" y="0"  width="22" height="100" fill="white"/>
+  <rect x="0"   y="0"  width="130" height="22" fill="white"/>
+  <rect x="0"   y="48" width="130" height="22" fill="white"/>
+  <!-- diagonal top-left chamfer cut -->
+  <polygon points="0,0 28,0 0,28" fill="#202124"/>
+  <!-- diagonal top-right chamfer cut -->
+  <polygon points="130,0 102,0 130,28" fill="#202124"/>
+
+  <!-- ═══ Letter S ═══
+       Top bar, left column top-half, mid bar with arrow, right col bottom-half, bottom bar
+  -->
+  <rect x="175" y="0"  width="130" height="22" fill="white"/>
+  <rect x="175" y="0"  width="22"  height="70" fill="white"/>
+  <rect x="175" y="48" width="108" height="22" fill="white"/>
+  <!-- right-pointing chevron/arrow on mid bar -->
+  <polygon points="283,48 305,59 283,70" fill="white"/>
+  <rect x="283" y="48" width="22"  height="52" fill="white"/>
+  <rect x="175" y="78" width="130" height="22" fill="white"/>
+  <!-- top-right corner cut -->
+  <polygon points="305,0 283,0 305,22" fill="#202124"/>
+  <!-- bottom-left corner cut -->
+  <polygon points="175,100 197,100 175,78" fill="#202124"/>
+
+  <!-- ═══ Letter R ═══
+       Left column full, top bar, right column top-half (loop), crossbar, diagonal leg
+  -->
+  <rect x="350" y="0"  width="22"  height="100" fill="white"/>
+  <rect x="350" y="0"  width="130" height="22"  fill="white"/>
+  <rect x="458" y="0"  width="22"  height="60"  fill="white"/>
+  <rect x="350" y="48" width="130" height="22"  fill="white"/>
+  <!-- diagonal leg: from mid-right down to bottom-right -->
+  <polygon points="372,70 458,70 480,100 458,100" fill="white"/>
+  <!-- top-right chamfer -->
+  <polygon points="480,0 458,0 480,22" fill="#202124"/>
+  <!-- inner loop void (white rectangle already covered — fill background) -->
+  <rect x="372" y="22" width="86"  height="26" fill="#202124"/>
+
+  <!-- ═══ Subtitle ═══ -->
+  <text
+    x="2" y="122"
+    font-family="Arial Narrow, Arial, sans-serif"
+    font-size="12"
+    font-weight="400"
+    letter-spacing="4"
+    fill="rgba(255,255,255,0.5)"
+  >AMERICAN SOFTWARE RESOURCES</text>
+
+</svg>

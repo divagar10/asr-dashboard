@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 160">
+
+  <!-- ═══ A ═══ -->
+  <!-- Outer A shape with geometric cut-ins -->
+  <path fill="white" d="
+    M10,130
+    L10,48  L22,30  L68,30  L80,48  L80,78  L68,88
+    L44,88  L44,100 L80,100 L80,130
+    L64,130 L64,104 L44,104 L44,130
+    Z
+  "/>
+  <!-- inner cutout (negative space inside A crossbar area) -->
+  <path fill="#111111" d="
+    M26,50  L26,74  L64,74  L64,50
+    Z
+  "/>
+  <!-- left leg notch -->
+  <path fill="#111111" d="
+    M26,88  L26,130 L10,130 L10,104 L26,104
+    Z
+  " opacity="0"/>
+
+  <!-- ═══ S ═══ -->
+  <path fill="white" d="
+    M110,30
+    L110,80  L122,88  L158,88  L158,110
+    L110,110 L110,130
+    L172,130 L172,80  L160,72  L124,72  L124,50
+    L172,50  L172,30
+    Z
+  "/>
+
+  <!-- ═══ R ═══ -->
+  <path fill="white" d="
+    M202,30
+    L202,130 L218,130 L218,96
+    L242,96  L260,130 L278,130 L258,94
+    L268,86  L268,48  L256,30
+    Z
+  "/>
+  <!-- R inner cutout -->
+  <path fill="#111111" d="
+    M218,50  L218,76  L252,76  L252,50
+    Z
+  "/>
+
+  <!-- ═══ Subtitle ═══ -->
+  <text
+    x="10" y="152"
+    font-family="'Arial Narrow', Arial, sans-serif"
+    font-size="11"
+    font-weight="400"
+    fill="white"
+    letter-spacing="4"
+    opacity="0.7"
+  >AMERICAN SOFTWARE RESOURCES</text>
+
+</svg>

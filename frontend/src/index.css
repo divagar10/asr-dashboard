@@ -1,0 +1,225 @@
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══════════════════════════════════════════════
+   BASE  — Google Analytics 4 style
+   White background · Google Blue · Black text
+═══════════════════════════════════════════════ */
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Google Sans', 'Inter', system-ui, sans-serif;
+    background-color: #F8F9FA;
+    color: #202124;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+
+  /* Scrollbar — GA4 style */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #F1F3F4; }
+  ::-webkit-scrollbar-thumb { background: #DADCE0; border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: #BDC1C6; }
+
+  h1, h2, h3, h4, h5 {
+    color: #202124;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   COMPONENTS
+═══════════════════════════════════════════════ */
+@layer components {
+
+  /* ── Cards ──────────────────────────────── */
+  .card {
+    background-color: #FFFFFF;
+    border: 1px solid #DADCE0;
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(60,64,67,0.08);
+  }
+  .card-hover {
+    background-color: #FFFFFF;
+    border: 1px solid #DADCE0;
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(60,64,67,0.08);
+    transition: all 0.2s ease;
+  }
+  .card-hover:hover {
+    border-color: #1A73E8;
+    box-shadow: 0 1px 6px rgba(26,115,232,0.2);
+    transform: translateY(-1px);
+  }
+  .card-blue {
+    background-color: #1A73E8;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(26,115,232,0.4);
+  }
+
+  /* ── Buttons ────────────────────────────── */
+  .btn-primary {
+    @apply inline-flex items-center gap-2 font-semibold text-sm px-5 py-2.5 rounded-lg
+           transition-all duration-150 active:scale-95 focus:outline-none;
+    background-color: #1A73E8;
+    color: #FFFFFF;
+    box-shadow: 0 1px 2px rgba(60,64,67,0.2);
+  }
+  .btn-primary:hover {
+    background-color: #1558B0;
+    box-shadow: 0 2px 6px rgba(26,115,232,0.3);
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 font-medium text-sm px-5 py-2.5 rounded-lg
+           transition-all duration-150 active:scale-95 focus:outline-none;
+    background-color: #FFFFFF;
+    color: #1A73E8;
+    border: 1px solid #DADCE0;
+    box-shadow: 0 1px 2px rgba(60,64,67,0.08);
+  }
+  .btn-secondary:hover {
+    background-color: #E8F0FE;
+    border-color: #1A73E8;
+  }
+
+  .btn-black {
+    @apply inline-flex items-center gap-2 font-semibold text-sm px-5 py-2.5 rounded-lg
+           transition-all duration-150 active:scale-95;
+    background-color: #202124;
+    color: #FFFFFF;
+  }
+  .btn-black:hover { background-color: #3C4043; }
+
+  /* ── Badges ─────────────────────────────── */
+  .badge-live {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide;
+    font-size: 0.62rem;
+    background-color: #E6F4EA;
+    color: #1E8E3E;
+    border: 1px solid #B7DFC4;
+  }
+  .badge-demo {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide;
+    font-size: 0.62rem;
+    background-color: #E8F0FE;
+    color: #1558B0;
+    border: 1px solid #C5D9FB;
+  }
+
+  /* ── Inputs ─────────────────────────────── */
+  .input {
+    @apply w-full text-sm rounded-lg px-4 py-2.5
+           transition-all duration-150 focus:outline-none;
+    background-color: #FFFFFF;
+    border: 1px solid #DADCE0;
+    color: #202124;
+  }
+  .input::placeholder { color: #9AA0A6; }
+  .input:focus {
+    border-color: #1A73E8;
+    box-shadow: 0 0 0 3px rgba(26,115,232,0.15);
+  }
+  .input-icon { @apply input pl-10; }
+
+  /* ── Typography ─────────────────────────── */
+  .section-title {
+    @apply text-sm font-semibold mb-4 flex items-center gap-2;
+    color: #3C4043;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .page-title {
+    @apply text-2xl font-bold mb-1;
+    color: #202124;
+    letter-spacing: -0.01em;
+  }
+  .page-sub { @apply text-sm; color: #5F6368; }
+  .stat-label {
+    @apply text-xs font-medium uppercase tracking-wider;
+    color: #5F6368;
+  }
+  .stat-value {
+    @apply text-3xl font-bold;
+    color: #202124;
+    letter-spacing: -0.02em;
+  }
+
+  /* ── Table ──────────────────────────────── */
+  .table-th {
+    @apply text-left px-4 py-3 font-semibold uppercase tracking-wider;
+    font-size: 0.7rem;
+    color: #5F6368;
+    background-color: #F8F9FA;
+    border-bottom: 1px solid #DADCE0;
+  }
+  .table-td {
+    @apply px-4 py-3 text-sm;
+    color: #3C4043;
+    border-bottom: 1px solid #F1F3F4;
+  }
+  .table-row-hover:hover { background-color: #F8F9FA; }
+}
+
+/* ═══════════════════════════════════════════════
+   UTILITIES
+═══════════════════════════════════════════════ */
+@layer utilities {
+  .text-blue   { color: #1A73E8; }
+  .bg-blue-soft { background-color: #E8F0FE; }
+
+  .text-muted  { color: #5F6368; }
+  .text-soft   { color: #80868B; }
+  .text-strong { color: #202124; }
+
+  .glow-blue   { box-shadow: 0 0 12px rgba(26,115,232,0.3); }
+  .strip-blue  { border-left: 3px solid #1A73E8; }
+}
+
+/* ═══════════════════════════════════════════════
+   SIDEBAR NAV ACTIVE  — GA4 blue pill style
+═══════════════════════════════════════════════ */
+.nav-active {
+  background-color: #E8F0FE !important;
+  color: #1A73E8 !important;
+  font-weight: 600;
+  border-radius: 24px !important;
+}
+
+/* ═══════════════════════════════════════════════
+   SKELETON
+═══════════════════════════════════════════════ */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, #F1F3F4 25%, #E8EAED 50%, #F1F3F4 75%);
+  background-size: 400px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+/* ═══════════════════════════════════════════════
+   PAGE TRANSITION
+═══════════════════════════════════════════════ */
+.page-enter { animation: fadeInPage 0.25s ease-out; }
+@keyframes fadeInPage {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════
+   COUNTER
+═══════════════════════════════════════════════ */
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-count { animation: countUp 0.6s ease-out forwards; }
