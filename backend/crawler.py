@@ -721,7 +721,13 @@ def run_crawl() -> dict:
         if "tlsInsecure" not in uri:
             sep = "&" if "?" in uri else "?"
             uri = f"{uri}{sep}tlsInsecure=true"
-        client = AsyncIOMotorClient(uri, serverSelectionTimeoutMS=10_000)
+        
+        client = AsyncIOMotorClient(
+            uri,
+            serverSelectionTimeoutMS=10_000,
+            tls=True,
+            tlsAllowInvalidCertificates=True,
+        )
         db = client[db_name]
         try:
             crawler = CISProCrawler()
