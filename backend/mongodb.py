@@ -32,19 +32,11 @@ async def connect_db() -> None:
     uri = get_mongo_uri()
     db_name = get_db_name()
     logger.info(f"Connecting to MongoDB (db={db_name})...")
-    
-    # Railway + Python 3.12+ has TLS handshake issues with Atlas — bypass cert verification
-    import ssl
-    ssl_context = ssl.create_default_context()
-    ssl_context.check_hostname = False
-    ssl_context.verify_mode = ssl.CERT_NONE
-    
+
     _client = AsyncIOMotorClient(
         uri,
         serverSelectionTimeoutMS=10_000,
-        tls=True,
         tlsAllowInvalidCertificates=True,
-        tlsInsecure=True,
     )
     await _client.admin.command("ping")
     _db = _client[db_name]

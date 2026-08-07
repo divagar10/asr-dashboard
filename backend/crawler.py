@@ -718,14 +718,9 @@ def run_crawl() -> dict:
         load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
         uri = os.environ.get("MONGODB_URI", "")
         db_name = os.environ.get("MONGODB_DB", "asr_dashboard")
-        if "tlsInsecure" not in uri:
-            sep = "&" if "?" in uri else "?"
-            uri = f"{uri}{sep}tlsInsecure=true"
-        
         client = AsyncIOMotorClient(
             uri,
             serverSelectionTimeoutMS=10_000,
-            tls=True,
             tlsAllowInvalidCertificates=True,
         )
         db = client[db_name]
