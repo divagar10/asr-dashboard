@@ -35,8 +35,11 @@ async def connect_db() -> None:
 
     _client = AsyncIOMotorClient(
         uri,
-        serverSelectionTimeoutMS=10_000,
+        serverSelectionTimeoutMS=15_000,
+        connectTimeoutMS=15_000,
+        socketTimeoutMS=20_000,
         tlsAllowInvalidCertificates=True,
+        retryWrites=True,
     )
     await _client.admin.command("ping")
     _db = _client[db_name]

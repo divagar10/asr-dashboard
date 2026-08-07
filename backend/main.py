@@ -46,17 +46,20 @@ def scheduled_crawl():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting ASR Dashboard backend...")
-    await connect_db()
-
-    db = get_db()
-    existing = await get_website_info(db)
-    if not existing:
-        logger.info("No website data found — running initial crawl in background...")
-        t = threading.Thread(target=run_crawl, daemon=True)
-        t.start()
-    else:
-        last_crawled = existing.get("last_crawled")
-        logger.info(f"Website data exists (last crawled: {last_crawled})")
+    try:
+        await connect_db()
+        db = get_db()
+        existing = await get_website_info(db)
+        if not existing:
+            logger.info("No website data found — running initial crawl in background...")
+            t = threading.Thread(target=run_crawl, daemon=True)
+            t.start()
+        else:
+            last_crawled = existing.get("last_crawled")
+            logger.info(f"Website data exists (last crawled: {last_crawled})")
+    except Exception as e:
+        logger.error(f"MongoDB connection failed on startup: {e}")
+        logger.warning("App starting without database — endpoints requiring DB will return errors")
 
     scheduler.add_job(
         scheduled_crawl,
