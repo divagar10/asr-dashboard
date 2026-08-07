@@ -1,0 +1,36 @@
+# ── Python ────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+env/
+*.egg-info/
+dist/
+build/
+*.db
+*.sqlite3
+
+# ── Environment / secrets ─────────────────────────────────────────────────
+.env
+backend/.env
+
+# ── Node / Frontend ───────────────────────────────────────────────────────
+node_modules/
+frontend/dist/
+frontend/.env.local
+
+# ── Firebase ──────────────────────────────────────────────────────────────
+# Keep firebase.json and .firebaserc in git (no secrets there)
+.firebase/
+
+# ── OS ────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── IDE ───────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
