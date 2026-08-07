@@ -1,18 +1,30 @@
 """
 ASR Digital Client Dashboard — FastAPI Backend
 Serves crawled website data (LIVE) and demo analytics data (DEMO)
+Database: MongoDB Atlas via Motor async driver
 """
 
 import os
+import sys
 import logging
+import threading
 from contextlib import asynccontextmanager
 from datetime import datetime
+
+from dotenv import load_dotenv
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
+
+# Windows + Python 3.12+ requires SelectorEventLoop for Motor/pymongo SSL
+if sys.platform == "win32":
+    import asyncio
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from database import create_tables, SessionLocal, WebsiteInfo
+from mongodb import connect_db, close_db, get_db
+from repositories import get_website_info
 from crawler import run_crawl
 from routers import dashboard, website, courses, blogs, seo, health, traffic, leads, insights, reports
 
@@ -34,20 +46,17 @@ def scheduled_crawl():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting ASR Dashboard backend...")
-    create_tables()
+    await connect_db()
 
-    db = SessionLocal()
-    try:
-        existing = db.query(WebsiteInfo).first()
-        if not existing:
-            logger.info("No website data found — running initial crawl...")
-            import threading
-            t = threading.Thread(target=run_crawl, daemon=True)
-            t.start()
-        else:
-            logger.info(f"Website data exists (last crawled: {existing.last_crawled})")
-    finally:
-        db.close()
+    db = get_db()
+    existing = await get_website_info(db)
+    if not existing:
+        logger.info("No website data found — running initial crawl in background...")
+        t = threading.Thread(target=run_crawl, daemon=True)
+        t.start()
+    else:
+        last_crawled = existing.get("last_crawled")
+        logger.info(f"Website data exists (last crawled: {last_crawled})")
 
     scheduler.add_job(
         scheduled_crawl,
@@ -63,27 +72,24 @@ async def lifespan(app: FastAPI):
     yield
 
     scheduler.shutdown(wait=False)
-    logger.info("Scheduler stopped")
+    await close_db()
+    logger.info("Shutdown complete")
 
 
 app = FastAPI(
     title="ASR Digital Client Dashboard API",
     description="Backend API for ASR Digital Client Dashboard — cisprotraining.com",
-    version="1.0.0",
+    version="2.0.0",
     lifespan=lifespan,
 )
 
-# ── CORS ────────────────────────────────────────────────────────────────────
-# Reads ALLOWED_ORIGINS from environment variable (comma-separated list).
-# Fallback covers local dev + any *.netlify.app domain.
+# ── CORS ──────────────────────────────────────────────────────────────────────
 _raw = os.environ.get(
     "ALLOWED_ORIGINS",
-    "http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173"
+    "http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173",
 )
 ALLOWED_ORIGINS: list[str] = [o.strip() for o in _raw.split(",") if o.strip()]
-
-# Always allow *.netlify.app wildcard for convenience
-ALLOWED_ORIGIN_REGEX = r"https://.*\.netlify\.app"
+ALLOWED_ORIGIN_REGEX = r"https://(.*\.netlify\.app|.*\.up\.railway\.app|.*\.vercel\.app)"
 
 app.add_middleware(
     CORSMiddleware,
@@ -94,7 +100,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── Routers ──────────────────────────────────────────────────────────────────
+# ── Routers ───────────────────────────────────────────────────────────────────
 app.include_router(dashboard.router)
 app.include_router(website.router)
 app.include_router(courses.router)
@@ -112,9 +118,10 @@ def api_status():
     return {
         "status": "online",
         "timestamp": datetime.utcnow().isoformat(),
-        "version": "1.0.0",
+        "version": "2.0.0",
         "project": "ASR Digital Client Dashboard",
         "website": "cisprotraining.com",
+        "database": "MongoDB Atlas",
     }
 
 
@@ -124,7 +131,7 @@ def get_settings():
         "company_name": "ASR Digital",
         "client_name": "CISPRO Training",
         "website_url": "https://cisprotraining.com",
-        "dashboard_version": "1.0.0",
+        "dashboard_version": "2.0.0",
         "theme": "dark",
         "notifications_enabled": True,
         "crawl_interval_hours": 12,

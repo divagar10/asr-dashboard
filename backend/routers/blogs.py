@@ -1,68 +1,47 @@
 """Blogs endpoint — returns live crawled blog posts"""
 
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Query
 from typing import Optional
-from database import get_db, BlogPost
+
+from mongodb import get_db
+from repositories import get_blogs
 
 router = APIRouter(prefix="/api/blogs", tags=["blogs"])
 
 
 @router.get("")
-def get_blogs(
-    db: Session = Depends(get_db),
+async def get_blogs_endpoint(
     search: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(12, ge=1, le=50),
 ):
-    query = db.query(BlogPost).order_by(BlogPost.id.desc())
+    db = get_db()
+    result = await get_blogs(db, search=search, page=page, page_size=page_size)
 
-    if search:
-        query = query.filter(BlogPost.title.ilike(f"%{search}%"))
+    def _fmt(p: dict) -> dict:
+        return {
+            "id": p.get("id"),
+            "title": p.get("title", ""),
+            "thumbnail_url": p.get("thumbnail_url", ""),
+            "published_date": p.get("published_date", ""),
+            "category": p.get("category", ""),
+            "author": p.get("author", ""),
+            "short_description": p.get("short_description", ""),
+            "post_url": p.get("post_url", ""),
+        }
 
-    total = query.count()
-    posts = query.offset((page - 1) * page_size).limit(page_size).all()
-
-    recent = db.query(BlogPost).order_by(BlogPost.id.desc()).limit(5).all()
+    recent = result["recent"]
+    most_recent = _fmt(recent[0]) if recent else None
 
     return {
         "source": "LIVE",
-        "total": total,
+        "total": result["total"],
         "page": page,
         "page_size": page_size,
-        "most_recent": (
-            {
-                "id": recent[0].id,
-                "title": recent[0].title,
-                "thumbnail_url": recent[0].thumbnail_url,
-                "published_date": recent[0].published_date,
-                "category": recent[0].category,
-                "author": recent[0].author,
-                "short_description": recent[0].short_description,
-                "post_url": recent[0].post_url,
-            }
-            if recent else None
-        ),
+        "most_recent": most_recent,
         "recent_posts": [
-            {
-                "id": p.id,
-                "title": p.title,
-                "published_date": p.published_date,
-                "category": p.category,
-            }
+            {"id": p.get("id"), "title": p.get("title", ""), "published_date": p.get("published_date", ""), "category": p.get("category", "")}
             for p in recent
         ],
-        "posts": [
-            {
-                "id": p.id,
-                "title": p.title,
-                "thumbnail_url": p.thumbnail_url,
-                "published_date": p.published_date,
-                "category": p.category,
-                "author": p.author,
-                "short_description": p.short_description,
-                "post_url": p.post_url,
-            }
-            for p in posts
-        ],
+        "posts": [_fmt(p) for p in result["posts"]],
     }

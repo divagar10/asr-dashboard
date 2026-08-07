@@ -1,8 +1,11 @@
 """
 Web Crawler for cisprotraining.com
 Extracts: website info, courses, blogs, SEO data, images, links, contact info
+Uses Motor (async MongoDB) via asyncio.run() so it can be called from a
+sync background thread (APScheduler / threading.Thread).
 """
 
+import asyncio
 import re
 import logging
 from datetime import datetime
@@ -11,11 +14,14 @@ from urllib.parse import urljoin, urlparse
 
 import httpx
 from bs4 import BeautifulSoup
-from sqlalchemy.orm import Session
 
-from database import (
-    SessionLocal, WebsiteInfo, Course, BlogPost, SEOData, CrawlLog,
-    create_tables
+from repositories import (
+    upsert_website_info,
+    replace_courses,
+    replace_blogs,
+    replace_seo,
+    create_crawl_log,
+    update_crawl_log,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -88,7 +94,6 @@ def categorize_course(name: str) -> str:
 
 def compute_seo_score(data: dict) -> float:
     score = 0
-    total = 100
 
     if data.get("page_title") and 10 < len(data["page_title"]) < 70:
         score += 15
@@ -109,7 +114,6 @@ def compute_seo_score(data: dict) -> float:
         score += 5
     if data.get("og_image"):
         score += 5
-
     if data.get("twitter_card"):
         score += 5
 
@@ -132,7 +136,6 @@ def compute_seo_score(data: dict) -> float:
 
     if data.get("has_structured_data"):
         score += 5
-
     if data.get("internal_links", 0) > 3:
         score += 5
 
@@ -141,22 +144,16 @@ def compute_seo_score(data: dict) -> float:
 
 class CISProCrawler:
     def __init__(self):
-        self.client = httpx.Client(
-            headers=HEADERS,
-            timeout=30,
-            follow_redirects=True
-        )
+        self.client = httpx.Client(headers=HEADERS, timeout=30, follow_redirects=True)
         self.visited_urls: set = set()
         self.internal_links: set = set()
         self.external_links: set = set()
-        self.images: list = []
-        self.all_pages: list = []
 
     def fetch(self, url: str) -> Optional[BeautifulSoup]:
         try:
             resp = self.client.get(url)
             if resp.status_code == 200:
-                return BeautifulSoup(resp.text, "lxml")
+                return BeautifulSoup(resp.text, "html.parser")
         except Exception as e:
             logger.warning(f"Failed to fetch {url}: {e}")
         return None
@@ -180,8 +177,7 @@ class CISProCrawler:
         text = soup.get_text(" ", strip=True)
 
         phones = re.findall(
-            r"(?:\+?\d[\d\s\-\(\)]{8,}|\d{4}[\s\-]\d{3,4}[\s\-]\d{3,4})",
-            text
+            r"(?:\+?\d[\d\s\-\(\)]{8,}|\d{4}[\s\-]\d{3,4}[\s\-]\d{3,4})", text
         )
         phones = list(set([p.strip() for p in phones if len(p.strip()) >= 8]))[:5]
 
@@ -206,12 +202,7 @@ class CISProCrawler:
                 map_url = iframe["src"]
                 break
 
-        return {
-            "phones": phones,
-            "emails": emails,
-            "address": address,
-            "map_url": map_url,
-        }
+        return {"phones": phones, "emails": emails, "address": address, "map_url": map_url}
 
     def extract_social_links(self, soup: BeautifulSoup) -> dict:
         socials = {}
@@ -237,9 +228,8 @@ class CISProCrawler:
         if nav:
             for a in nav.find_all("a", href=True):
                 label = a.get_text(strip=True)
-                href = a["href"]
                 if label and len(label) < 50:
-                    items.append({"label": label, "url": href})
+                    items.append({"label": label, "url": a["href"]})
         if not items:
             header = soup.find("header")
             if header:
@@ -247,16 +237,16 @@ class CISProCrawler:
                     label = a.get_text(strip=True)
                     if label and len(label) < 50:
                         items.append({"label": label, "url": a["href"]})
-        seen = []
+        seen, deduped = [], []
         for item in items:
-            if item["label"] not in [s["label"] for s in seen]:
-                seen.append(item)
-        return seen[:20]
+            if item["label"] not in seen:
+                seen.append(item["label"])
+                deduped.append(item)
+        return deduped[:20]
 
     def detect_technologies(self, soup: BeautifulSoup, html: str) -> list:
         techs = []
         html_lower = html.lower()
-
         checks = {
             "WordPress": ["wp-content", "wp-includes", "wordpress"],
             "React": ["react.js", "react.min.js", "__react"],
@@ -273,11 +263,9 @@ class CISProCrawler:
             "PHP": [".php", "php"],
             "Font Awesome": ["font-awesome", "fontawesome"],
         }
-
         for tech, signals in checks.items():
             if any(s in html_lower for s in signals):
                 techs.append(tech)
-
         return techs
 
     def extract_business_hours(self, soup: BeautifulSoup) -> str:
@@ -293,8 +281,6 @@ class CISProCrawler:
                 return " | ".join(matches[:5])
         if "24/7" in text or "24 hours" in text.lower():
             return "24/7"
-        if "9am" in text.lower() or "9:00" in text:
-            return "Mon–Fri: 9:00 AM – 6:00 PM"
         return "Mon–Fri: 9:00 AM – 6:00 PM"
 
     def extract_logo(self, soup: BeautifulSoup, base: str) -> str:
@@ -304,40 +290,42 @@ class CISProCrawler:
             classes = " ".join(img.get("class", [])).lower()
             if any(w in alt + src.lower() + classes for w in ["logo", "brand", "site-logo"]):
                 return urljoin(base, src)
-
         header = soup.find("header")
         if header:
             img = header.find("img")
             if img and img.get("src"):
                 return urljoin(base, img["src"])
-
         return ""
 
     def extract_hero_banner(self, soup: BeautifulSoup, base: str) -> str:
-        for selector in [
-            ".hero img", ".banner img", ".slider img",
-            "#hero img", "#banner img", ".hero-section img",
-            ".jumbotron img",
-        ]:
+        for selector in [".hero img", ".banner img", ".slider img", "#hero img", "#banner img", ".hero-section img", ".jumbotron img"]:
             el = soup.select_one(selector)
             if el and el.get("src"):
                 return urljoin(base, el["src"])
-
         for div in soup.find_all("div"):
             style = div.get("style", "")
             if "background-image" in style:
                 match = re.search(r"url\(['\"]?(.*?)['\"]?\)", style)
                 if match:
                     return urljoin(base, match.group(1))
-
-        imgs = soup.find_all("img")
-        for img in imgs[:5]:
+        for img in soup.find_all("img")[:5]:
             src = img.get("src", "")
             w = img.get("width", "0")
             if src and (str(w).isdigit() and int(w) > 300):
                 return urljoin(base, src)
-
         return ""
+
+    @staticmethod
+    def clean_name(raw: str) -> str:
+        noise = ["view course", "learn more", "enroll now", "register", "apply now",
+                 "click here", "read more", "view details", "get started"]
+        cleaned = raw
+        for n in noise:
+            cleaned = re.sub(n, "", cleaned, flags=re.IGNORECASE)
+        cleaned = " ".join(cleaned.split())
+        if len(cleaned) > 80:
+            cleaned = cleaned[:80].rsplit(" ", 1)[0]
+        return cleaned.strip()
 
     def crawl_website_info(self) -> dict:
         logger.info(f"Crawling website info from {BASE_URL}")
@@ -346,7 +334,6 @@ class CISProCrawler:
             return {}
 
         html = str(soup)
-
         title_tag = soup.find("title")
         title = title_tag.get_text(strip=True) if title_tag else ""
 
@@ -364,9 +351,7 @@ class CISProCrawler:
         internal, external = self.extract_links(soup, BASE_URL)
         self.internal_links = internal
         self.external_links = external
-
         images = soup.find_all("img")
-        self.images = images
 
         return {
             "name": "CISPRO Training",
@@ -390,10 +375,7 @@ class CISProCrawler:
         }
 
     def check_robots_sitemap(self) -> dict:
-        robots = False
-        sitemap = False
-        sitemap_url = ""
-
+        robots, sitemap, sitemap_url = False, False, ""
         try:
             r = self.client.get(f"{BASE_URL}/robots.txt")
             if r.status_code == 200 and "user-agent" in r.text.lower():
@@ -418,7 +400,6 @@ class CISProCrawler:
         return {"robots": robots, "sitemap": sitemap}
 
     def count_pages(self) -> int:
-        """Try to estimate number of pages from sitemap or crawl."""
         try:
             r = self.client.get(f"{BASE_URL}/sitemap.xml")
             if r.status_code == 200:
@@ -429,27 +410,9 @@ class CISProCrawler:
             pass
         return max(len(self.internal_links), 1)
 
-    @staticmethod
-    def clean_name(raw: str) -> str:
-        """Remove navigation noise like 'View course', extra whitespace, duplicated words."""
-        # Remove common button/link text appended to titles
-        noise = ["view course", "learn more", "enroll now", "register", "apply now",
-                 "click here", "read more", "view details", "get started"]
-        cleaned = raw
-        for n in noise:
-            cleaned = re.sub(n, "", cleaned, flags=re.IGNORECASE)
-        # Collapse whitespace
-        cleaned = " ".join(cleaned.split())
-        # Trim to first sensible sentence if very long
-        if len(cleaned) > 80:
-            cleaned = cleaned[:80].rsplit(" ", 1)[0]
-        return cleaned.strip()
-
     def crawl_courses(self) -> list:
         logger.info("Crawling courses...")
         courses = []
-
-        # Strategy 1: collect all /courses/* links from the sitemap or homepage
         course_links = set()
         soup_main = self.fetch(BASE_URL)
 
@@ -457,11 +420,9 @@ class CISProCrawler:
             for a in soup_main.find_all("a", href=True):
                 href = a["href"].strip()
                 full = urljoin(BASE_URL, href)
-                # Direct course page links like /courses/python
                 if re.search(r"/courses?/[^/]+", href):
                     course_links.add(full)
 
-        # Also try to get from sitemap
         try:
             r = self.client.get(f"{BASE_URL}/sitemap.xml")
             if r.status_code == 200:
@@ -471,7 +432,6 @@ class CISProCrawler:
         except Exception:
             pass
 
-        # Strategy 2: fetch /courses listing page
         listing_page = self.fetch(f"{BASE_URL}/courses")
         if listing_page:
             for a in listing_page.find_all("a", href=True):
@@ -480,27 +440,22 @@ class CISProCrawler:
                 if re.search(r"/courses?/[^/]+", href):
                     course_links.add(full)
 
-        # Fetch each course page individually for clean names
         for curl in sorted(course_links)[:30]:
             soup = self.fetch(curl)
             if not soup:
                 continue
 
-            # Get the page <title> as the cleanest course name
             t = soup.find("title")
             raw_name = t.get_text(strip=True) if t else ""
-            # Strip site suffix like " | CISPRO Training"
             raw_name = re.sub(r"\s*[\|\-–]\s*(cispro|training|institute).*$", "", raw_name, flags=re.IGNORECASE)
             name = self.clean_name(raw_name)
 
-            # Fall back to first h1
             if not name or len(name) < 3:
                 h1 = soup.find("h1")
                 if h1:
                     name = self.clean_name(h1.get_text(strip=True))
 
             if not name or len(name) < 3:
-                # derive from URL slug
                 slug = curl.rstrip("/").split("/")[-1]
                 name = slug.replace("-", " ").title()
 
@@ -513,18 +468,15 @@ class CISProCrawler:
                 p = soup.find("p")
                 desc = p.get_text(strip=True)[:300] if p else ""
 
-            category = categorize_course(name + " " + curl)
-
             courses.append({
                 "name": name,
-                "category": category,
+                "category": categorize_course(name + " " + curl),
                 "image_url": img_url,
                 "course_url": curl,
                 "description": desc,
                 "last_updated": datetime.utcnow(),
             })
 
-        # Strategy 3: fallback — parse cards from main page
         if not courses and soup_main:
             course_cards = (
                 soup_main.select("[class*='course']") or
@@ -535,17 +487,13 @@ class CISProCrawler:
                 heading = card.find(["h1", "h2", "h3", "h4"])
                 if not heading:
                     continue
-                # Only take the heading's direct text, not nested elements
-                name = self.clean_name(
-                    "".join(t for t in heading.strings if t.parent == heading or t.parent.name not in ["a","span","button"]).strip()
-                    or heading.get_text(strip=True)
-                )
+                name = self.clean_name(heading.get_text(strip=True))
                 if not name or len(name) < 3:
                     continue
                 link_el = card.find("a", href=True)
                 curl = urljoin(BASE_URL, link_el["href"]) if link_el else BASE_URL
                 img_el = card.find("img")
-                img_url = urljoin(BASE_URL, img_el.get("src","")) if img_el else ""
+                img_url = urljoin(BASE_URL, img_el.get("src", "")) if img_el else ""
                 desc_el = card.find("p")
                 desc = desc_el.get_text(strip=True)[:300] if desc_el else ""
                 courses.append({
@@ -557,8 +505,7 @@ class CISProCrawler:
                     "last_updated": datetime.utcnow(),
                 })
 
-        seen = []
-        deduped = []
+        seen, deduped = [], []
         for c in courses:
             if c["name"] not in seen:
                 seen.append(c["name"])
@@ -570,11 +517,7 @@ class CISProCrawler:
     def crawl_blogs(self) -> list:
         logger.info("Crawling blogs...")
         blogs = []
-
-        blog_paths = [
-            "/blog", "/blogs", "/news", "/articles", "/posts",
-            "/resources", "/insights",
-        ]
+        blog_paths = ["/blog", "/blogs", "/news", "/articles", "/posts", "/resources", "/insights"]
 
         for path in blog_paths:
             url = f"{BASE_URL}{path}"
@@ -608,10 +551,7 @@ class CISProCrawler:
                 if img_el:
                     thumb = urljoin(BASE_URL, img_el.get("src") or img_el.get("data-src") or "")
 
-                date_el = (
-                    post.find("time") or
-                    post.find(class_=re.compile(r"date|time|published", re.I))
-                )
+                date_el = post.find("time") or post.find(class_=re.compile(r"date|time|published", re.I))
                 pub_date = ""
                 if date_el:
                     pub_date = date_el.get("datetime") or date_el.get_text(strip=True)
@@ -639,8 +579,7 @@ class CISProCrawler:
             if blogs:
                 break
 
-        seen = []
-        deduped = []
+        seen, deduped = [], []
         for b in blogs:
             if b["title"] not in seen:
                 seen.append(b["title"])
@@ -651,8 +590,7 @@ class CISProCrawler:
 
     def crawl_seo(self, pages: list) -> list:
         logger.info("Crawling SEO data...")
-        seo_results = []
-
+        results = []
         for url in pages[:10]:
             soup = self.fetch(url)
             if not soup:
@@ -681,8 +619,6 @@ class CISProCrawler:
 
             imgs = soup.find_all("img")
             missing_alt = sum(1 for img in imgs if not img.get("alt"))
-            img_count = len(imgs)
-
             int_links, ext_links = self.extract_links(soup, url)
 
             has_structured = bool(
@@ -704,64 +640,48 @@ class CISProCrawler:
                 "h2_tags": h2s[:10],
                 "h3_tags": h3s[:10],
                 "missing_alt_count": missing_alt,
-                "image_count": img_count,
+                "image_count": len(imgs),
                 "broken_images": 0,
                 "internal_links": len(int_links),
                 "external_links": len(ext_links),
                 "has_structured_data": has_structured,
             }
             data["seo_score"] = compute_seo_score(data)
-            seo_results.append(data)
+            results.append(data)
 
-        return seo_results
+        return results
 
-    def run(self, db: Session) -> dict:
-        log = CrawlLog(started_at=datetime.utcnow(), status="running")
-        db.add(log)
-        db.commit()
+    async def run_async_with_db(self, db) -> dict:
+        """Full crawl that writes directly to MongoDB via Motor."""
+        log_id = await create_crawl_log(db)
 
         try:
             logger.info("=== Starting full crawl ===")
 
-            # Website Info
             info = self.crawl_website_info()
-            rs_info = self.check_robots_sitemap()
-            info["robots_txt"] = rs_info["robots"]
-            info["sitemap"] = rs_info["sitemap"]
+            rs = self.check_robots_sitemap()
+            info["robots_txt"] = rs["robots"]
+            info["sitemap"] = rs["sitemap"]
             info["page_count"] = self.count_pages()
+            await upsert_website_info(db, info)
 
-            db.query(WebsiteInfo).delete()
-            db.add(WebsiteInfo(**info))
-            db.commit()
-
-            # Courses
             courses = self.crawl_courses()
-            db.query(Course).delete()
-            for c in courses:
-                db.add(Course(**c))
-            db.commit()
+            await replace_courses(db, courses)
 
-            # Blogs
             blogs = self.crawl_blogs()
-            db.query(BlogPost).delete()
-            for b in blogs:
-                db.add(BlogPost(**b))
-            db.commit()
+            await replace_blogs(db, blogs)
 
-            # SEO
             pages = [BASE_URL] + list(self.internal_links)[:9]
             seo_data = self.crawl_seo(pages)
-            db.query(SEOData).delete()
-            for s in seo_data:
-                db.add(SEOData(**s))
-            db.commit()
+            await replace_seo(db, seo_data)
 
-            log.completed_at = datetime.utcnow()
-            log.status = "completed"
-            log.pages_crawled = len(pages)
-            log.courses_found = len(courses)
-            log.blogs_found = len(blogs)
-            db.commit()
+            await update_crawl_log(db, log_id, {
+                "status": "completed",
+                "completed_at": datetime.utcnow(),
+                "pages_crawled": len(pages),
+                "courses_found": len(courses),
+                "blogs_found": len(blogs),
+            })
 
             logger.info("=== Crawl completed ===")
             return {
@@ -773,27 +693,48 @@ class CISProCrawler:
 
         except Exception as e:
             logger.error(f"Crawl failed: {e}")
-            log.status = "failed"
-            log.error_message = str(e)
-            log.completed_at = datetime.utcnow()
-            db.commit()
+            await update_crawl_log(db, log_id, {
+                "status": "failed",
+                "error_message": str(e),
+                "completed_at": datetime.utcnow(),
+            })
             return {"status": "failed", "error": str(e)}
 
         finally:
             self.client.close()
 
 
-def run_crawl():
-    """Entry point for scheduler and manual trigger."""
-    create_tables()
-    db = SessionLocal()
-    try:
-        crawler = CISProCrawler()
-        return crawler.run(db)
-    finally:
-        db.close()
+def run_crawl() -> dict:
+    """
+    Sync entry point for APScheduler / threading.Thread.
+    Creates a brand-new Motor client bound to its own fresh event loop
+    so it never conflicts with the FastAPI event loop.
+    """
+    async def _run():
+        # Always create a fresh connection for this thread's event loop
+        from motor.motor_asyncio import AsyncIOMotorClient
+        import os
+        from dotenv import load_dotenv
+        load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
+        uri = os.environ.get("MONGODB_URI", "")
+        db_name = os.environ.get("MONGODB_DB", "asr_dashboard")
+        if "tlsInsecure" not in uri:
+            sep = "&" if "?" in uri else "?"
+            uri = f"{uri}{sep}tlsInsecure=true"
+        client = AsyncIOMotorClient(uri, serverSelectionTimeoutMS=10_000)
+        db = client[db_name]
+        try:
+            crawler = CISProCrawler()
+            return await crawler.run_async_with_db(db)
+        finally:
+            client.close()
+
+    return asyncio.run(_run())
 
 
 if __name__ == "__main__":
+    import os
+    from dotenv import load_dotenv
+    load_dotenv()
     result = run_crawl()
     print(result)

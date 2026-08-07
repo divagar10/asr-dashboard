@@ -1,9 +1,10 @@
 """Courses endpoint — returns live crawled course data"""
 
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Query
 from typing import Optional
-from database import get_db, Course
+
+from mongodb import get_db
+from repositories import get_courses
 
 router = APIRouter(prefix="/api/courses", tags=["courses"])
 
@@ -11,48 +12,36 @@ CATEGORIES = ["All", "Programming", "Cloud", "Networking", "Embedded", "Office",
 
 
 @router.get("")
-def get_courses(
-    db: Session = Depends(get_db),
+async def get_courses_endpoint(
     category: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
 ):
-    query = db.query(Course)
+    db = get_db()
+    result = await get_courses(db, category=category, search=search, page=page, page_size=page_size)
 
-    if category and category != "All":
-        query = query.filter(Course.category == category)
-
-    if search:
-        query = query.filter(Course.name.ilike(f"%{search}%"))
-
-    total = query.count()
-    courses = query.offset((page - 1) * page_size).limit(page_size).all()
-
-    # Count by category
-    all_courses = db.query(Course).all()
-    category_counts = {}
-    for c in all_courses:
-        cat = c.category or "Other"
-        category_counts[cat] = category_counts.get(cat, 0) + 1
+    courses = []
+    for c in result["courses"]:
+        last_updated = c.get("last_updated")
+        if hasattr(last_updated, "isoformat"):
+            last_updated = last_updated.isoformat()
+        courses.append({
+            "id": c.get("id"),
+            "name": c.get("name", ""),
+            "category": c.get("category", ""),
+            "image_url": c.get("image_url", ""),
+            "course_url": c.get("course_url", ""),
+            "description": c.get("description", ""),
+            "last_updated": last_updated,
+        })
 
     return {
         "source": "LIVE",
-        "total": total,
+        "total": result["total"],
         "page": page,
         "page_size": page_size,
         "categories": CATEGORIES,
-        "category_counts": category_counts,
-        "courses": [
-            {
-                "id": c.id,
-                "name": c.name,
-                "category": c.category,
-                "image_url": c.image_url,
-                "course_url": c.course_url,
-                "description": c.description,
-                "last_updated": c.last_updated.isoformat() if c.last_updated else None,
-            }
-            for c in courses
-        ],
+        "category_counts": result["category_counts"],
+        "courses": courses,
     }

@@ -1,19 +1,21 @@
 """Website Health endpoint — combines live crawled data with demo placeholders"""
 
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-from database import get_db, WebsiteInfo
+from fastapi import APIRouter
+
+from mongodb import get_db
+from repositories import get_website_info
 
 router = APIRouter(prefix="/api/health", tags=["health"])
 
 
 @router.get("")
-def get_health(db: Session = Depends(get_db)):
-    info = db.query(WebsiteInfo).first()
+async def get_health():
+    db = get_db()
+    info = await get_website_info(db)
 
-    ssl = info.ssl_status if info else True
-    robots = info.robots_txt if info else False
-    sitemap = info.sitemap if info else False
+    ssl = info.get("ssl_status", True) if info else True
+    robots = info.get("robots_txt", False) if info else False
+    sitemap = info.get("sitemap", False) if info else False
 
     checks = [
         {"label": "SSL Certificate", "status": ssl, "source": "LIVE", "detail": "HTTPS enabled" if ssl else "No HTTPS"},
@@ -28,12 +30,10 @@ def get_health(db: Session = Depends(get_db)):
         {"label": "Image Optimization", "status": None, "source": "DEMO", "score": 61, "detail": "37% of images not compressed"},
     ]
 
-    # Calculate overall health score
     live_checks = [c for c in checks if c["source"] == "LIVE"]
     passed_live = sum(1 for c in live_checks if c.get("status") is True)
     demo_scores = [c["score"] for c in checks if c.get("score") is not None]
     avg_demo = sum(demo_scores) / len(demo_scores) if demo_scores else 70
-
     live_score = (passed_live / len(live_checks)) * 100 if live_checks else 50
     overall = round((live_score * 0.4) + (avg_demo * 0.6))
 
